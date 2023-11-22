@@ -1,16 +1,21 @@
-import 'package:app/data/task_data.dart';
+import 'package:app/models/add_task_request.dart';
+import 'package:app/services/shared_preferences.dart';
+import 'package:app/services/task_service.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 class AddTaskScreen extends StatelessWidget {
-  List<String> items = [
-    "category 1",
-    "category 2",
-    "category 3",
-    "category 4",
-    "category 5"
-  ];
+  TaskService task_service = GetIt.I<TaskService>();
+  SharedPrefernces shared_prefs = GetIt.I<SharedPrefernces>();
+
   TextEditingController _title = TextEditingController();
+
+  _addTask(BuildContext ctx) async {
+    final user_id = await shared_prefs.getLoggedUserIDFromPrefs();
+    await task_service
+        .addtask(AddTaskRequest(userId: user_id!, title: _title.text));
+    Navigator.pop(ctx);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +42,7 @@ class AddTaskScreen extends StatelessWidget {
             height: 10,
           ),
           ElevatedButton(
-            onPressed: () {
-              Provider.of<TaskData>(context, listen: false)
-                  .addTask(_title.text);
-              Navigator.pop(context);
-            },
+            onPressed: () => _addTask(context),
             child: Text(
               'Create',
               style: TextStyle(fontSize: 15),
@@ -49,19 +50,6 @@ class AddTaskScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.teal[400],
             ),
-          ),
-          Center(
-            child: DropdownButton<String>(
-                value: items[0],
-                items: items
-                    .map((item) => DropdownMenuItem(
-                          child: Text(item),
-                          value: item,
-                        ))
-                    .toList(),
-                onChanged: (item) {
-                  print(item);
-                }),
           )
         ],
       ),

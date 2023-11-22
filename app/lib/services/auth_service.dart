@@ -5,8 +5,10 @@ import 'package:app/models/auth_request.dart';
 import 'package:app/models/auth_response.dart';
 import 'package:app/models/register_request.dart';
 import 'package:app/models/user.dart';
+import 'package:app/services/shared_preferences.dart';
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
 const ip = "172.19.14.50";
 const port = 3000;
@@ -16,27 +18,12 @@ class AuthService {
   late final Dio _dio;
   final headers = {'Content-Type': 'application/json'};
 
+  SharedPrefernces shared_prefs = GetIt.I<SharedPrefernces>();
+
   AuthService() {
     _dio = Dio();
     _dio.interceptors.add(DioInterceptor());
   }
-
-  final LOGGED_USER_KEY = "tododay_user";
-
-  Future<void> saveUserToPrefs(User user) async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setString(LOGGED_USER_KEY, json.encode(user.toMap()));
-  }
-
-  Future<User?> getUserFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(LOGGED_USER_KEY);
-    if (jsonString == null) {
-      return null;
-    }
-    return User.fromMap(json.decode(jsonString));
-  }
-
   Future<ApiResponse> login(AuthRequest credentials) async {
     try {
       final response = await _dio.post(
@@ -65,6 +52,10 @@ class AuthService {
       print("================== EXCEPTION RAISED =====================");
       return _handleError(e);
     }
+  }
+
+  logout() {
+    shared_prefs.removeUserFromPrefs();
   }
 
   _handleError(DioException e) {

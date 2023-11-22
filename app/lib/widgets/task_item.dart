@@ -1,12 +1,21 @@
-import 'package:app/data/task_data.dart';
 import 'package:app/models/task.dart';
+import 'package:app/services/task_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
-class TaskItem extends StatelessWidget {
+class TaskItem extends StatefulWidget {
   final Task task;
 
-  TaskItem({required this.task});
+  TaskItem({required this.task}) {}
+
+  @override
+  State<TaskItem> createState() => _TaskItemState();
+}
+
+class _TaskItemState extends State<TaskItem> {
+  TaskService task_service = GetIt.I<TaskService>();
+  bool isDone = false;
 
   @override
   Widget build(BuildContext context) {
@@ -21,11 +30,7 @@ class TaskItem extends StatelessWidget {
             content: Text("Do you want to delete task ?"),
             actions: [
               TextButton(
-                onPressed: () {
-                  Provider.of<TaskData>(context, listen: false)
-                      .deleteTask(task.id);
-                  Navigator.pop(context);
-                },
+                onPressed: () {},
                 child: Text('YES'),
               ),
               TextButton(
@@ -39,15 +44,18 @@ class TaskItem extends StatelessWidget {
         );
       },
       title: Text(
-        task.title,
+        widget.task.title,
         style: TextStyle(
-            decoration: task.isDone ? TextDecoration.lineThrough : null),
+            decoration: widget.task.isDone ? TextDecoration.lineThrough : null),
       ),
       trailing: Checkbox(
-        value: task.isDone,
+        value: widget.task.isDone,
         activeColor: Colors.teal[400],
-        onChanged: (value) {
-          Provider.of<TaskData>(context, listen: false).completeTask(task.id);
+        onChanged: (value) async {
+          await task_service.markTaskAsDone(widget.task.id);
+          setState(() {
+            widget.task.isDone = !widget.task.isDone;
+          });
         },
       ),
     );

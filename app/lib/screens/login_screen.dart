@@ -1,44 +1,51 @@
 import 'package:app/models/auth_request.dart';
+import 'package:app/models/user.dart';
 import 'package:app/screens/signup_screen.dart';
 import 'package:app/screens/tasks_screen.dart';
 import 'package:app/services/auth_service.dart';
+import 'package:app/services/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 
 class LoginScreen extends StatelessWidget {
-  AuthService service = GetIt.I<AuthService>();
+  AuthService auth_service = GetIt.I<AuthService>();
+  SharedPrefernces shared_prefs = GetIt.I<SharedPrefernces>();
 
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
 
   doLogin(BuildContext ctx) {
-    service
+    print("login pressed");
+    auth_service
         .login(AuthRequest(email: _email.text, password: _password.text))
-        .then((response) => {
-              service.saveUserToPrefs(response.data),
-              Navigator.of(ctx).pushReplacement(MaterialPageRoute(
-                builder: (context) => TasksScreen(),
-              ))
-            })
-        .catchError(
-          (exception) => {
-            showDialog(
-              context: ctx,
-              builder: (context) => AlertDialog(
-                title: Text('Error'),
-                content: Text(exception.message),
-                actions: [
-                  TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text('OK'))
-                ],
-              ),
-            )
-          },
-        );
+        .then((response) async {
+      final User user = response.data;
+      await shared_prefs.saveUserDataToPrefs(user.id, user.name, user.email);
+      Navigator.of(ctx).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => TasksScreen(),
+        ),
+      );
+    }).catchError(
+      (exception) => {
+        showDialog(
+          context: ctx,
+          builder: (context) => AlertDialog(
+            title: Text('Error'),
+            content: Text(exception.message),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('OK'),
+              )
+            ],
+          ),
+        )
+      },
+    );
   }
 
   @override
@@ -84,6 +91,7 @@ class LoginScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: TextField(
+                  keyboardType: TextInputType.emailAddress,
                   controller: _email,
                   decoration: InputDecoration(
                     hintText: "Email",
