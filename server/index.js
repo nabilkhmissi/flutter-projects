@@ -9,7 +9,6 @@ app.use(express.json());
 
 app.post("/auth/login", (req, res) => {
     const { email, password } = req.body;
-    console.log(email + password);
     const user = users.find(user => user.email === email);
     if (!user) {
         return res.status(404).send({ message: "User with this email not found" });
@@ -18,15 +17,12 @@ app.post("/auth/login", (req, res) => {
     if (user.password !== password) {
         return res.status(500).send({ message: "Invalid creadentials" });
     }
-    console.log(user);
-
     return res.status(200).send({ data: user, message: "authenticated successfully" });
 })
 
 //signup
 app.post("/auth/register", (req, res) => {
     const { name, email, password } = req.body;
-    console.log(name + email + password);
     const user = users.find(user => user.email === email);
     if (user) {
         return res.status(400).send({ message: "This email is already in use" });
@@ -37,13 +33,13 @@ app.post("/auth/register", (req, res) => {
 })
 
 
-let notes = [
-    { id: 1, title: "note 1 title", content: "this is a sample content" },
-    { id: 2, title: "note 2 title", content: "this is a sample content" },
-    { id: 3, title: "note 3 title", content: "this is a sample content" },
-    { id: 4, title: "note 4 title", content: "this is a sample content" },
-    { id: 5, title: "note 5 title", content: "this is a sample content" },
-    { id: 66, title: "note 66 title", content: "this is a sample content" },
+let tasks = [
+    { id: 1, title: "note 1 title", content: "this is a sample content", isDone: false, userId: 1 },
+    { id: 2, title: "note 2 title", content: "this is a sample content", isDone: false, userId: 1 },
+    { id: 3, title: "note 3 title", content: "this is a sample content", isDone: false, userId: 2 },
+    { id: 4, title: "note 4 title", content: "this is a sample content for user 2", isDone: false, userId: 2 },
+    { id: 5, title: "note 5 title", content: "this is a sample content for user 2", isDone: false, userId: 1 },
+    { id: 66, title: "note 66 title", content: "this is a sample content", isDone: false, userId: 1 },
 ];
 
 const users = [
@@ -53,13 +49,26 @@ const users = [
 
 
 
-app.get("/notes/user/:id", (req, res) => {
+app.get("/tasks/user/:id", (req, res) => {
     const user_id = req.params.id;
-    const user = users.find(u => u.id === user_id);
-    if (!user) {
+    console.log("requesting tasks for user with ID = " + user_id);
+    const user_tasks = tasks.filter(t => t.userId == user_id);
+    console.log("========== tasks by user ==========")
+    console.log(user_tasks);
+    /* if (!user) {
         return res.status(500).send({ message: "user with this id not found" });
-    }
-    return res.status(200).send({ message: "notes retrieved", data: user.notes });
+    } */
+    return res.status(200).send({ message: "tasks retrieved successfully", data: user_tasks });
+})
+
+
+app.get("/tasks/:id/done", (req, res) => {
+    const id = req.params.id;
+    console.log("mark task with ID " + id + " as done");
+    const task_id = req.params.id;
+    const task = tasks.find(t => t.id == task_id);
+    task.isDone = !task.isDone;
+    return res.status(200).send({ message: "tasks updated successfully" });
 })
 
 app.get("/notes/:id", (req, res) => {
@@ -76,17 +85,16 @@ app.delete("/notes/:id", (req, res) => {
     return res.status(200).send({ message: "note deleted" });
 })
 
-app.post("/notes", (req, res) => {
+app.post("/tasks", (req, res) => {
     console.log(req.body);
-    const new_note = { ...req.body, id: notes.length + 1 };
-    console.log(new_note);
+    const new_task = { ...req.body, id: tasks.length + 1 };
+    tasks.push(new_task);
+    console.log(tasks);
 
-    notes.push(new_note);
-    return res.status(201).send({ message: "note created" });
+    return res.status(201).send({ message: "Task created successfully" });
 })
 
 app.put("/notes", (req, res) => {
-    console.log("update");
     const updated = req.body;
     const index = notes.findIndex(note => note.id === updated.id);
     notes[index] = res.body;
